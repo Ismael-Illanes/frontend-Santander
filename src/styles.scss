@@ -1,1 +1,54 @@
-/* You can add global styles to this file, and also import other style files */
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+app-candidate-manager {
+  width: 100%;
+}
+
+:root {
+  --background-dark: #121212;
+  --text-dark: #e0e0e0;
+  --card-dark: #1e1e1e;
+  --primary-dark: #bb86fc;
+  --accent-dark: #03dac6;
+  --warn-dark: #cf6679;
+}
+
+.mat-form-field, .mat-raised-button {
+  color: var(--text-dark);
+}
+
+.mat-form-field .mat-form-field-label {
+  color: var(--text-dark);
+}
+
+.mat-form-field .mat-input-element {
+  color: var(--text-dark);
+}
+
+.table-container {
+  min-height: 350px;
+  max-height: 100%;
+}
+
+.mat-table {
+  background-color: var(--card-dark);
+  color: var(--text-dark);
+  height: auto;
+}
+
+.mat-header-cell {
+  color: var(--text-dark);
+}
+
+.mat-cell {
+  color: var(--text-dark);
+}

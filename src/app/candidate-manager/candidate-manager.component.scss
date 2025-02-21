@@ -1,0 +1,38 @@
+
+.container {
+  margin: 20px;
+  width: 100%;
+}
+
+table {
+  width: 100%;
+  background-color: var(--card-dark);
+  color: var(--text-dark);
+}
+
+th.mat-header-cell {
+  color: var(--text-dark);
+}
+
+td.mat-cell {
+  color: var(--text-dark);
+}
+
+.mat-form-field {
+  display: block;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+input[type="file"] {
+  color: var(--text-dark);
+  width: 100%;
+}
+
+::ng-deep .mat-form-field-label {
+  color: white !important;
+}
+
+::ng-deep .mat-input-element {
+  color: white !important;
+}
