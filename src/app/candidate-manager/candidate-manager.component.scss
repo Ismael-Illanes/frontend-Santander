@@ -1,4 +1,3 @@
-
 .container {
   margin: 20px;
   width: 100%;
@@ -6,6 +5,8 @@
 
 table {
   width: 100%;
+  max-width: 800px;
+  table-layout: fixed;
   background-color: var(--card-dark);
   color: var(--text-dark);
 }
@@ -16,6 +17,10 @@ th.mat-header-cell {
 
 td.mat-cell {
   color: var(--text-dark);
+  white-space: nowrap;
+  max-width: 150px;
+  overflow-x: auto;
+  display: block;
 }
 
 .mat-form-field {

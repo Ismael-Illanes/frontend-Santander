@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>Editar Candidato</h2>
+<mat-dialog-content>
+  <form [formGroup]="editForm">
+    <mat-form-field appearance="fill">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Apellido</mat-label>
+      <input matInput formControlName="surname">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Seniority</mat-label>
+      <input matInput formControlName="seniority">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Años</mat-label>
+      <input matInput formControlName="years">
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Disponibilidad</mat-label>
+      <mat-select formControlName="availability">
+        <mat-option [value]="true">Sí</mat-option>
+        <mat-option [value]="false">No</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onNoClick()">Cancelar</button>
+  <button mat-button [mat-dialog-close]="editForm.value" cdkFocusInitial>Guardar</button>
+</mat-dialog-actions>

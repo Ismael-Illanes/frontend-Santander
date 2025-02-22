@@ -18,4 +18,12 @@ export class CandidateService {
   getAllCandidates(): Observable<Candidate[]> {
     return this.http.get<Candidate[]>(this.apiUrl);
   }
+
+  deleteCandidate(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  updateCandidate(candidate: Candidate): Observable<Candidate> {
+    return this.http.put<Candidate>(`${this.apiUrl}/${candidate.id}`, candidate);
+  }
 }

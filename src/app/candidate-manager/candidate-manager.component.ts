@@ -12,6 +12,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import * as XLSX from 'xlsx';
+import { MatDialog } from '@angular/material/dialog';
+import { CandidateEditDialogComponent } from '../candidate-edit-dialog/candidate-edit-dialog.component';
 
 @Component({
   selector: 'app-candidate-manager',
@@ -27,10 +29,10 @@ import * as XLSX from 'xlsx';
     MatPaginatorModule,
   ],
   templateUrl: './candidate-manager.component.html',
-  styleUrls: ['./candidate-manager.component.css'],
+  styleUrls: ['./candidate-manager.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CandidateManagerComponent implements OnInit {
+export class CandidateManagerComponent implements OnInit, AfterViewInit {
   candidateForm: FormGroup;
   candidates: Candidate[] = [];
   dataSource = new MatTableDataSource<Candidate>([]);
@@ -43,7 +45,8 @@ export class CandidateManagerComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private candidateService: CandidateService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public dialog: MatDialog
   ) {
     this.candidateForm = this.fb.group({
       name: ['', Validators.required],
@@ -56,18 +59,41 @@ export class CandidateManagerComponent implements OnInit {
     this.loadCandidates();
   }
 
+  ngAfterViewInit() {
+    setTimeout(() => {
+      if (this.paginator) {
+        this.dataSource.paginator = this.paginator;
+        this.paginator.firstPage();
+      }
+    });
+  }
+
   loadCandidates(): void {
     this.candidateService.getAllCandidates().subscribe((data: Candidate[]) => {
       this.candidates = data;
+      this.sortCandidates();
       this.dataSource.data = this.candidates;
-      this.resetPaginator();
       this.cdr.detectChanges();
     });
+  }
+
+  sortCandidates(): void {
+    this.candidates.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   }
 
   onFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
+      if (file.type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        alert('Por favor, selecciona solo archivos Excel (.xlsx).');
+        this.candidateForm.get('excelFile')?.setValue(null);
+
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e: any) => {
         const data = e.target.result;
@@ -98,8 +124,8 @@ export class CandidateManagerComponent implements OnInit {
 
       this.candidateService.submitCandidate(formData).subscribe((response: Candidate) => {
         this.candidates.push(response);
+        this.sortCandidates();
         this.dataSource.data = this.candidates;
-        this.resetPaginator();
         this.candidateForm.reset();
         this.excelData = null;
         this.clearFileInput();
@@ -115,6 +141,32 @@ export class CandidateManagerComponent implements OnInit {
     }
   }
 
+  editCandidate(candidate: Candidate): void {
+    const dialogRef = this.dialog.open(CandidateEditDialogComponent, {
+      width: '400px',
+      data: candidate,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        const updatedCandidate: Candidate = { ...candidate, ...result };
+        this.candidateService.updateCandidate(updatedCandidate).subscribe(() => {
+          this.loadCandidates();
+        });
+      }
+    });
+  }
+
+  deleteCandidate(id: number): void {
+    this.candidateService.deleteCandidate(id).subscribe(() => {
+      this.candidates = this.candidates.filter((candidate) => candidate.id !== id);
+      this.sortCandidates();
+      this.dataSource.data = this.candidates;
+      this.resetPaginator();
+      this.cdr.detectChanges();
+    });
+  }
+
   resetPaginator() {
     setTimeout(() => {
       if (this.paginator) {
@@ -122,13 +174,5 @@ export class CandidateManagerComponent implements OnInit {
         this.paginator.firstPage();
       }
     });
-  }
-
-  editCandidate(candidate: Candidate) {
-    console.log('Edit candidate:', candidate);
-  }
-
-  deleteCandidate(id: number) {
-    console.log('Delete candidate with ID:', id);
   }
 }
