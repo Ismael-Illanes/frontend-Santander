@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Candidate } from '../models/Candidate.model';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -14,36 +15,29 @@ export class CandidateService {
   submitCandidate(candidateData: FormData): Observable<Candidate> {
     return this.http
       .post<Candidate>(`${this.apiUrl}/upload`, candidateData)
-      .pipe(catchError(this.handleError));
+      .pipe(catchError((error) => this.handleError(error)));
   }
 
   getAllCandidates(): Observable<Candidate[]> {
     return this.http
       .get<Candidate[]>(this.apiUrl)
-      .pipe(catchError(this.handleError));
+      .pipe(catchError((error) => this.handleError(error)));
   }
 
   deleteCandidate(id: number): Observable<void> {
     return this.http
       .delete<void>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(this.handleError));
+      .pipe(catchError((error) => this.handleError(error)));
   }
 
   updateCandidate(candidate: Candidate): Observable<Candidate> {
     return this.http
       .put<Candidate>(`${this.apiUrl}/${candidate.id}`, candidate)
-      .pipe(catchError(this.handleError));
+      .pipe(catchError((error) => this.handleError(error)));
   }
 
   private handleError(error: HttpErrorResponse) {
-    if (error.error instanceof ErrorEvent) {
-      console.error('An error occurred:', error.error.message);
-    } else {
-      console.error(
-        `Backend returned code ${error.status}, ` + `body was: ${error.error}`
-      );
-    }
-
-    return throwError(() => 'Something bad happened; please try again later.');
+    console.error('An error occurred:', error);
+    return throwError(() => error); // Lanza el error original
   }
 }

@@ -38,11 +38,21 @@
     </button>
   </form>
 
-  <div [hidden]="candidates.length === 0" style="margin-top: 40px; width: 100%; max-width: 800px;">
+  <div *ngIf="loading" style="margin-top: 20px; font-size: 1.5em; color: white;">
+    Cargando...
+  </div>
+
+  <div *ngIf="serverError" style="margin-top: 20px; font-size: 1.5em; color: red;">
+    No hay conexión con el servidor.
+  </div>
+
+  <div *ngIf="!loading && !serverError && candidates.length === 0" style="margin-top: 20px; font-size: 1.5em; color: white;">
+    No hay candidatos.
+  </div>
+
+  <div *ngIf="!loading && !serverError && candidates.length > 0" style="margin-top: 40px; width: 100%; max-width: 800px;">
     <div class="table-container">
       <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-
-
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef> Name </th>
           <td mat-cell *matCellDef="let candidate" [attr.data-full-text]="candidate.name">
@@ -77,10 +87,6 @@
             {{ candidate.availability ? 'Sí' : 'No' }}
           </td>
         </ng-container>
-
-
-
-
 
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Actions </th>

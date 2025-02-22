@@ -21,6 +21,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import * as XLSX from 'xlsx';
 import { MatDialog } from '@angular/material/dialog';
 import { CandidateEditDialogComponent } from '../candidate-edit-dialog/candidate-edit-dialog.component';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-candidate-manager',
@@ -52,10 +53,11 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
   ];
   displayedColumnsWithActions: string[] = [...this.displayedColumns, 'actions'];
   excelData: any;
+  serverError: boolean = false;
+  loading: boolean = true;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  // Constructor: injects dependencies and initializes the form.
   constructor(
     private fb: FormBuilder,
     private candidateService: CandidateService,
@@ -65,19 +67,16 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     this.initializeForm();
   }
 
-  // ngOnInit: loads candidates when the component initializes.
   ngOnInit(): void {
     this.loadCandidates();
   }
 
-  // ngAfterViewInit: assigns the paginator to the dataSource after the view is rendered.
   ngAfterViewInit() {
     if (this.paginator) {
       this.dataSource.paginator = this.paginator;
     }
   }
 
-  // Initializes the reactive form.
   initializeForm(): void {
     this.candidateForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(50)]],
@@ -86,17 +85,30 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     });
   }
 
-
-  // Loads candidates from the backend.
   loadCandidates(): void {
-    this.candidateService.getAllCandidates().subscribe((data: Candidate[]) => {
-      console.log('Candidates loaded:', data);
-      this.candidates = data;
-      this.updateDataSource();
-    });
+    this.loading = true;
+    this.candidateService
+      .getAllCandidates()
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data: Candidate[]) => {
+          console.log('Candidates loaded:', data);
+          this.candidates = data;
+          this.updateDataSource();
+          this.serverError = false;
+        },
+        error: (error) => {
+          console.error('Error loading candidates:', error);
+          this.serverError = true;
+        },
+      });
   }
 
-  // Updates the table dataSource and assigns the paginator.
   updateDataSource(): void {
     console.log('Updating dataSource:', this.candidates);
     this.sortCandidates();
@@ -110,12 +122,10 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
-  // Sorts candidates by their id.
   sortCandidates(): void {
     this.candidates.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
   }
 
-  // Handles the change event in the file input.
   onFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -127,7 +137,6 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Validates that the file is an Excel (.xlsx).
   isValidExcelFile(file: File): boolean {
     if (
       file.type !==
@@ -140,7 +149,6 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     return true;
   }
 
-  // Resets the file input.
   resetFileInput(): void {
     const fileInput = document.querySelector(
       'input[type="file"]'
@@ -150,7 +158,6 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Reads and processes the content of the Excel file.
   readExcelFile(file: File): void {
     const reader = new FileReader();
     reader.onload = (e: any) => {
@@ -160,7 +167,6 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-      // Definir explícitamente el tipo de headers como string[]
       const headers: string[] = jsonData[0] as string[];
       const requiredHeaders = ['seniority', 'years', 'availability'];
       const hasValidHeaders = requiredHeaders.every(header => headers.includes(header));
@@ -171,7 +177,6 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
         return;
       }
 
-      // Verificar que solo haya una fila de datos además de la fila de encabezados
       if (jsonData.length !== 2) {
         alert('El archivo Excel debe contener solo una fila de datos además de la fila de encabezados.');
         this.resetFileInput();
@@ -184,23 +189,31 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     reader.readAsBinaryString(file);
   }
 
-
-
-  // Submits the form and updates the candidate list.
   onSubmit() {
     if (this.candidateForm.valid) {
       const formData = this.createFormData();
       this.candidateService
         .submitCandidate(formData)
-        .subscribe((response: Candidate) => {
-          this.candidates.push(response);
-          this.updateDataSource();
-          this.resetForm();
+        .pipe(
+          finalize(() => {
+            this.loading = false;
+            this.cdr.detectChanges();
+          })
+        )
+        .subscribe({
+          next: (response: Candidate) => {
+            this.candidates.push(response);
+            this.updateDataSource();
+            this.resetForm();
+          },
+          error: (error) => {
+            console.error('Error submitting candidate:', error);
+            this.serverError = true;
+          },
         });
     }
   }
 
-  // Creates a FormData object from the form values.
   createFormData(): FormData {
     const formValues = this.candidateForm.value;
     const formData = new FormData();
@@ -215,14 +228,12 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
     return formData;
   }
 
-  // Resets the form and the file input.
   resetForm(): void {
     this.candidateForm.reset();
     this.excelData = null;
     this.resetFileInput();
   }
 
-  // Opens a dialog to edit a candidate.
   editCandidate(candidate: Candidate): void {
     const dialogRef = this.dialog.open(CandidateEditDialogComponent, {
       width: '400px',
@@ -233,21 +244,46 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
         const updatedCandidate: Candidate = { ...candidate, ...result };
         this.candidateService
           .updateCandidate(updatedCandidate)
-          .subscribe(() => {
-            this.loadCandidates();
+          .pipe(
+            finalize(() => {
+              this.loading = false;
+              this.cdr.detectChanges();
+            })
+          )
+          .subscribe({
+            next: () => {
+              this.loadCandidates();
+            },
+            error: (error) => {
+              console.error('Error updating candidate:', error);
+              this.serverError = true;
+            },
           });
-      }
-    });
   }
+});
+}
 
-  // Deletes a candidate and updates the table.
-  deleteCandidate(id: number): void {
-    this.candidateService.deleteCandidate(id).subscribe(() => {
+deleteCandidate(id: number): void {
+this.candidateService
+.deleteCandidate(id)
+.pipe(
+    finalize(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    })
+  )
+.subscribe({
+    next: () => {
       this.candidates = this.candidates.filter(
-        (candidate) => candidate.id !== id
+        (candidate) => candidate.id!== id
       );
       this.updateDataSource();
       this.paginator.firstPage();
-    });
-  }
+    },
+    error: (error) => {
+      console.error('Error deleting candidate:', error);
+      this.serverError = true;
+    },
+  });
+}
 }
