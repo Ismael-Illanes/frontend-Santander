@@ -80,11 +80,12 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
   // Initializes the reactive form.
   initializeForm(): void {
     this.candidateForm = this.fb.group({
-      name: ['', Validators.required],
-      surname: ['', Validators.required],
+      name: ['', [Validators.required, Validators.maxLength(50)]],
+      surname: ['', [Validators.required, Validators.maxLength(50)]],
       excelFile: [null, Validators.required],
     });
   }
+
 
   // Loads candidates from the backend.
   loadCandidates(): void {
@@ -158,13 +159,32 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      if (jsonData.length > 1) {
-        this.excelData = jsonData[1];
-        this.candidateForm.patchValue({ excelFile: this.excelData });
+
+      // Definir explícitamente el tipo de headers como string[]
+      const headers: string[] = jsonData[0] as string[];
+      const requiredHeaders = ['seniority', 'years', 'availability'];
+      const hasValidHeaders = requiredHeaders.every(header => headers.includes(header));
+
+      if (!hasValidHeaders) {
+        alert('El archivo Excel debe contener los encabezados: seniority, years, availability.');
+        this.resetFileInput();
+        return;
       }
+
+      // Verificar que solo haya una fila de datos además de la fila de encabezados
+      if (jsonData.length !== 2) {
+        alert('El archivo Excel debe contener solo una fila de datos además de la fila de encabezados.');
+        this.resetFileInput();
+        return;
+      }
+
+      this.excelData = jsonData[1];
+      this.candidateForm.patchValue({ excelFile: this.excelData });
     };
     reader.readAsBinaryString(file);
   }
+
+
 
   // Submits the form and updates the candidate list.
   onSubmit() {
