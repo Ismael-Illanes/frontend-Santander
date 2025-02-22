@@ -38,6 +38,6 @@ export class CandidateService {
 
   private handleError(error: HttpErrorResponse) {
     console.error('An error occurred:', error);
-    return throwError(() => error); // Lanza el error original
+    return throwError(() => error);
   }
 }
