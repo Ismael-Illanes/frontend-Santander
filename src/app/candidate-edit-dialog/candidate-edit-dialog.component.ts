@@ -1,5 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+} from '@angular/material/dialog';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Candidate } from '../../models/Candidate.model';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,7 +23,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatButtonModule,
   ],
   templateUrl: './candidate-edit-dialog.component.html',
-  styleUrls: ['./candidate-edit-dialog.component.scss']
+  styleUrls: ['./candidate-edit-dialog.component.scss'],
 })
 export class CandidateEditDialogComponent implements OnInit {
   editForm: FormGroup;
@@ -29,12 +33,13 @@ export class CandidateEditDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: Candidate,
     private fb: FormBuilder
   ) {
+    const candidateCopy = { ...data };
     this.editForm = this.fb.group({
-      name: [data.name],
-      surname: [data.surname],
-      seniority: [data.seniority],
-      years: [data.years],
-      availability: [data.availability]
+      name: [candidateCopy.name],
+      surname: [candidateCopy.surname],
+      seniority: [candidateCopy.seniority],
+      years: [candidateCopy.years],
+      availability: [candidateCopy.availability],
     });
   }
 

@@ -219,6 +219,8 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
             this.candidates.push(response);
             this.updateDataSource();
             this.resetForm();
+
+            this.cdr.detectChanges();
           },
           error: (error) => {
             this.serverError = true;
@@ -243,10 +245,21 @@ export class CandidateManagerComponent implements OnInit, AfterViewInit {
   }
 
   resetForm(): void {
-    // Reset the candidate form.
-    this.candidateForm.reset();
+
+
+    this.candidateForm.reset({
+      name: '',
+      surname: '',
+      excelFile: null,
+    });
+
+
+    this.candidateForm.get('name')?.setErrors(null);
+    this.candidateForm.get('surname')?.setErrors(null);
+
     this.excelData = null;
     this.resetFileInput();
+    this.cdr.detectChanges();
   }
 
   editCandidate(candidate: Candidate): void {
