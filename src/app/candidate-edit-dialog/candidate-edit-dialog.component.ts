@@ -18,7 +18,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatSelectModule,
     MatButtonModule,
   ],
-  templateUrl: './candidate-edit-dialog.component.html'
+  templateUrl: './candidate-edit-dialog.component.html',
+  styleUrls: ['./candidate-edit-dialog.component.scss']
 })
 export class CandidateEditDialogComponent implements OnInit {
   editForm: FormGroup;
